@@ -1,0 +1,117 @@
+<html lang="en">
+
+<head>
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://getbootstrap.com/examples/justified-nav/justified-nav.css" rel="stylesheet"> 
+    <link href="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.css" rel="stylesheet">
+	
+	<!-- Isolated Version of Bootstrap, not needed if your site already uses Bootstrap -->
+	<link rel="stylesheet" href="https://formden.com/static/cdn/bootstrap-iso.css" />
+
+	<!-- Bootstrap Date-Picker Plugin -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker3.css"/>
+</head>
+
+<body>
+    
+
+    <div class="flex-container">
+	  <div class="bootstrap-iso">
+		 <div class="container-fluid">
+		  <div class="row">
+		   <div class="col-md-6 col-sm-6 col-xs-12">
+
+			<!-- Form code begins -->
+			<form action="http://127.0.0.1:5000/GetBarGraph" method="post" >
+			  <div class="form-group"> <!-- Date input -->
+				<label class="control-label" for="dateFrom">Date From</label>
+				<input class="form-control" id="dateFrom" name="dateFrom" placeholder="MM/DD/YYY" type="date"/>
+				<label class="control-label" for="dateTo">Date To</label>
+				<input class="form-control" id="dateTo" name="dateTo" placeholder="MM/DD/YYY" type="date"/>
+			  </div>
+			  <div class="form-group"> <!-- Submit button -->
+				<button class="btn btn-primary " name="submit" type="submit" id="submitBtn">Submit</button>
+			  </div>
+			 </form>
+			 <!-- Form code ends --> 
+
+			</div>
+			<div id="chart">
+				<svg></svg>
+			</div>
+		  </div>    
+		 </div>
+		</div>
+      
+    </div>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.min.js" charset="utf-8"></script>
+    
+	<script>
+		
+		$(function() {
+			$("#submitBtn").click(function() {
+				 $.ajax({
+					type: "GET",
+					url: $SCRIPT_ROOT + "/echo/",
+					contentType: "application/json; charset=utf-8",
+					data: { echoValue: $('input[name="echoText"]').val() },
+					success: function(data) {
+						$('#echoResult').text(data.value);
+					}
+				});     
+			});
+		  });
+		 
+		
+        generateChart();
+		
+		  function generateChart() {
+			var result = []
+			
+			d3.json("http://127.0.0.1:5000/GetBarGraph", function(error,data) {
+				
+				
+				for (var k in data) {
+					var jsonData = {}
+					console.log(k)
+					jsonData['key'] = k
+					jsonData['values'] = []
+					data[k].forEach(function(val){
+						jsonData['values'].push({x:val.x, y:val.y})
+					})
+					result.push(jsonData)
+				}
+				//console.log("Created result object")
+				//console.log(result)
+
+			nv.addGraph(function() {
+			  var chart = nv.models.multiBarChart();
+
+			  // chart.xAxis
+			  //     .tickFormat(d3.format(',f'));
+
+			  chart.yAxis
+				  .tickFormat(d3.format(',.1f'));
+			  chart.color(['#0026FF', '#FF0000'])
+
+			  d3.select('#chart svg')
+				  .datum(result)
+				  .call(chart);
+
+			  nv.utils.windowResize(chart.update);
+
+			  return chart;
+			});
+
+			});
+		  }
+		
+
+    </script>
+
+</body>
+
+</html>
